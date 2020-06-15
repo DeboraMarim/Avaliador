@@ -1,0 +1,221 @@
+
+;Esse é um programa desenvolvido para aprovar ou reprovar projetos.
+;Para serem aprovados, os projetos precisam ter pontuação média, maior que 8 pontos 
+;e precisam, obrigatoriamente, SER SUSTENTAVEIS. 
+; O administrador do sistema, avaliará com nota de 0 à 10, o nivel de sustentabilidade do projeto.
+; Só serão aprovados, projetos que tiverem media de notas e nivel de sustentabilidade maiores que 8 pontos
+
+
+%include "asm_io.inc"
+;
+; Dados Inicializados segment .data
+;
+segment .data
+;
+; Textos de saida
+;
+msg10 db    "ATENÇÃO! Só serão aprovados, projetos que o sistema avaliar como sustentável. ", 0
+msg11 db    "AVALIE OS REQUISITOS PROPOSTOS, COM NOTAS DE 0 (zero) À 10 (dez): ", 0
+msg1 db    "O Projeto demonstra interesse em promover bem estar social  : ", 0      
+msg2 db    "O Projeto apresenta planos para uso de recursos financeiros : ", 0
+msg3 db    "O Projeto apresenta proposta de inclusão social: ", 0
+msg4 db    "O Projeto foi escrito de forma clara e objetiva: ", 0
+msg5 db    "O PROJETO É BOM!! APROVADO!!", 0
+msg6 db    "É NECESSÁRIO SER SUSTENTAVEL E CUMPRIR COM OS REQUISITOS PROPOSTOS. REPROVADO!", 0
+msg8 db    "MEDIA DE PONTUAÇÃO: ", 0
+msg9 db    "NIVEL DE SUSTENTABILIDADE: ", 0
+
+
+
+;
+; Dados não incializados segment .bss
+;
+segment .bss
+;
+;  armazenar os valores de entrada
+;
+nota1  resd 1
+nota2  resd 1
+nota3  resd 1
+nota4  resd 1
+media  resd 1
+nivel  resd 1
+flag1  resd 1
+flag2  resd 1
+ 
+
+;
+; main
+;
+segment .text
+        global  _asm_main
+_asm_main:
+        enter   0,0              		
+        pusha
+		
+		mov     eax, msg10      			
+        call    print_string
+		call	print_nl
+		
+		call 	print_nl
+		
+		mov     eax, msg11      			
+        call    print_string
+		call	print_nl
+		
+		call 	print_nl
+		
+		mov     eax, msg1      			
+        call    print_string
+		
+		mov		ebx, nota1
+		call    receber_nota        		
+
+		mov     eax, msg2      			
+        call    print_string
+		
+		mov		ebx, nota2
+		call    receber_nota  
+		
+		mov     eax, msg3      			
+        call    print_string
+		
+		mov		ebx, nota3
+		call    receber_nota
+		
+		mov     eax, msg4      			
+        call    print_string
+		
+		mov		ebx, nota4
+		call    receber_nota
+		
+		mov     eax, msg9      			
+        call    print_string
+		
+		mov		ebx, nivel
+		call    receber_nota
+		
+		
+		
+		call 	print_nl
+		
+		
+		call	calcularMedia
+		
+		call	verificar_nota
+		
+		call	verificar_nivelsus
+		
+		call	verificar_status
+				
+		
+		call 	print_nl
+
+		call _asm_main
+
+        popa
+        mov     eax, 0            ; return back to C
+        leave                     
+        ret
+		
+;Subprogramas
+receber_nota:
+
+		
+		call	read_int
+		cmp		eax, 10
+		jg		_asm_main			; Se eax > 10 volta no inicio
+		
+		mov		[ebx], eax
+		
+		ret
+
+		
+calcularMedia:
+		mov		eax, [nota1]
+		add		eax, [nota2]
+		add		eax, [nota3]
+		add		eax, [nota4]
+		
+		sar		eax, 1
+		
+		mov		ebx, 2
+		idiv	ebx
+		
+		mov		[media], eax
+		
+		
+		ret
+		
+verificar_nota:
+		cmp		eax, 8
+		jl		reprovadoNota					; Se eax < 8 pula para reprovado
+		
+		mov		eax, 1
+		mov		[flag1], eax
+		
+		jmp		fim_verificar_nota
+		
+	reprovadoNota:
+		
+		mov		eax, 0
+		mov		[flag1], eax
+		
+	fim_verificar_nota:
+	
+		ret
+		
+verificar_nivelsus:
+		mov		ebx, [nivel]
+		mov		eax, 10
+		sub		eax, ebx;
+		
+		cmp		eax, 2
+		jg		reprovadonivelsus			; Se eax > 2 pula para reprovado
+		
+		mov		eax, 1
+		mov		[flag2], eax
+		
+		jmp		fim_verificar_nivelsus
+		
+	reprovadonivelsus:
+		
+		mov		eax, 0
+		mov		[flag2], eax
+		
+	fim_verificar_nivelsus:
+	
+		ret
+		
+		
+verificar_status:
+
+
+		mov		eax, [flag1]
+		mov		ebx, [flag2]
+		and		eax, ebx
+		
+		cmp		eax, 1
+		je		aprovado
+		
+		mov		eax, msg6
+		call	print_string
+
+		jmp		continuar
+
+	aprovado:
+	
+			mov		eax, msg5
+			call	print_string
+			call 	print_nl
+			mov		eax, msg8
+			call	print_string
+			mov		eax, [media]
+			call	print_int
+			
+			
+
+	continuar:
+	
+		ret
+		
